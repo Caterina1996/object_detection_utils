@@ -1,0 +1,209 @@
+
+---- set up PC ----
+
+OS: ubuntu 16.04  * during installation check both third party ... external ...
+Graphic card: nvidia 1080
+
+---- drivers ----
+
+drivers: 384.130  * from ubuntu installation installation
+		  * from settings->additional drivers -> 384.130
+		  * from $ sudo add-apt-repository ppa:graphics-drivers/ppa
+			 $ sudo apt-get update
+			 $ sudo apt-get install nvidia-384 nvidia-modprobe
+
+
+---- basic tools ---- https://www.youtube.com/watch?v=rILtTjrecQc
+
+$ sudo apt-get update
+$ sudo apt-get --assume-yes upgrade
+$ sudo apt-get --assume-yes install tmux build-essential gcc g++ make binutils
+$ sudo apt-get --assume-yes install software-properties-common
+
+---- CUDA ---- https://medium.com/repro-repo/install-cuda-and-cudnn-for-tensorflow-gpu-on-ubuntu-79306e4ac04e
+
+CUDA: 8.0 GA2 RUNFILE * from https://developer.nvidia.com/cuda-toolkit-archive
+
+$ chmod +x cuda_8.0.61_375.26_linux.run
+$ ./cuda_8.0.61_375.26_linux.run --extract=$HOME
+
+You should have unpacked three components: 
+1 - NVIDIA-Linux-x86_64-384.81.run (NVIDIA driver that we ignore)
+2 - cuda-linux.9.0.176-22781540.run (CUDA 8.0 installer)
+3 - cuda-samples.9.0.176-22781540-linux.run (CUDA 8.0 Samples).
+
+$ sudo ./cuda-linux.9.0.176-22781540.run
+
+You now have to accept the license by scrolling down to the bottom and enter “accept”. Next accept the defaults.
+To verify our CUDA installation, install the sample tests by
+
+$ sudo ./cuda-samples.9.0.176-22781540-linux.run
+
+After the installation finishes, configure the runtime library.
+
+$ sudo bash -c "echo /usr/local/cuda/lib64/ > /etc/ld.so.conf.d/cuda.conf"
+$ sudo ldconfig
+
+include nvcc in $PATH
+
+$ sudo nano /etc/environment
+add :/usr/local/cuda/bin (including the ":") at the end of the PATH="/blah:/blah/blah" string (inside the quotes)
+
+$ reboot
+
+Lets test
+
+$ cd /usr/local/cuda-8.0/samples
+$ sudo make
+$ cd /usr/local/cuda/samples/bin/x86_64/linux/release
+$ ./deviceQuery
+Result = PASS
+
+
+
+---- CUDNN ---- https://medium.com/repro-repo/install-cuda-and-cudnn-for-tensorflow-gpu-on-ubuntu-79306e4ac04e
+
+CUDNN: 6.0 fron CUDA 8 * from https://developer.nvidia.com/rdp/cudnn-archive (mikimartin11@gmail, L _ _ _ _ _ _ _ _ _ _ !)
+
+Download all 3 .deb files: the runtime library, the developer library, and the code samples library for Ubuntu 16.04
+
+$ sudo dpkg -i libcudnn7_7.0.5.15–1+cuda9.0_amd64.deb (the runtime library)
+$ sudo dpkg -i libcudnn7-dev_7.0.5.15–1+cuda9.0_amd64.deb (the developer library)
+$ sudo dpkg -i libcudnn7-doc_7.0.5.15–1+cuda9.0_amd64.deb (the code samples)
+
+test CUDNN
+
+- copy the code samples somewhere you have write access: 
+$ cp -r /usr/src/cudnn_samples_v6/ /home/miguel/Desktop/
+$ cd /home/miguel/Desktop/cudnn_samples_v6/mnistCUDNN
+$ make clean && make
+$ ./mnistCUDNN
+Test passed!
+
+configure the CUDA and cuDNN library paths, put the following line in the end or your .bashrc file
+
+# configure the CUDA and cuDNN library paths
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/extras/CUPTI/lib64"
+
+
+---- ANACONDA ---- 
+
+download anaconda (end of page): https://www.anaconda.com/products/individual#linux
+
+install conda dependencies and anaconda (https://docs.anaconda.com/anaconda/install/linux/)
+
+$ sudo apt-get install libgl1-mesa-glx libegl1-mesa libxrandr2 libxrandr2 libxss1 libxcursor1 libxcomposite1 libasound2 libxi6 libxtst6
+$ bash ~/Downloads/Anaconda3-2020.02-Linux-x86_64.sh
+
+you can deactivate the auto base environment on new shell
+$ conda config --set auto_activate_base false
+
+create conda env
+
+conda create --name det35 python=3.5 
+conda create --name det36 python=3.6 
+
+conda activate det3x
+
+---- TENSORFLOW ----
+
+error when installing tensorflow 1.4 from conda. Installed by pip
+pip install tensorflow-gpu==1.4
+
+---- OBJECT DETECTION API ---- https://github.com/tensorflow/models/blob/a7c84b82b70f6f5fd3b523656680989a757aa0a8/research/object_detection/g3doc/installation.md
+			       https://pythonprogramming.net/introduction-use-tensorflow-object-detection-api-tutorial/
+
+clone git at commit a7c84b82b70f6f5fd3b523656680989a757aa0a8 (https://github.com/tensorflow/models/tree/a7c84b82b70f6f5fd3b523656680989a757aa0a8)
+
+$ git clone https://github.com/tensorflow/models
+$ cd https://github.com/tensorflow/models
+$ git reset --hard a7c84b82b70f6f5fd3b523656680989a757aa0a8
+
+install needed libraries
+
+$ conda install pillow
+$ conda install lxml
+$ conda install jupyter
+$ conda install matplotlib
+$ conda install scipy=1.1.0
+
+check protoc version with protoc --version, if not 3.4.0:
+
+- https://github.com/protocolbuffers/protobuf/releases
+- go to protoc 3.4.0 (maybe this link will go https://github.com/protocolbuffers/protobuf/releases?after=v3.6.0rc1)
+- bottom -> assets -> download protoc-3.4.0-linux-x86_64.zip
+- unzip protoc-3.4.0-linux-x86_64.zip
+- install (https://gist.github.com/ryujaehun/991f5f1e8c1485dea72646877707f497):
+$ cd protoc-3.4.0-linux-x86_64
+$ sudo mv bin/* /usr/local/bin/
+$ sudo mv include/* /usr/local/include/
+- check protoc --version
+
+from models/research:
+
+protoc object_detection/protos/*.proto --python_out=.
+export PYTHONPATH=$PYTHONPATH:`pwd`:`pwd`/slim
+
+test API on jupyter notebook
+
+$ cd object_detection
+$ jupyter notebook
+- cells -> run all (it should work on conda env pyth python 3.5, not on 3.6 missmatch something, idk, idc)
+cute dogs found
+
+---- DATA ---- https://pythonprogramming.net/custom-objects-tracking-tensorflow-object-detection-api-tutorial/
+	       https://pythonprogramming.net/creating-tfrecord-files-tensorflow-object-detection-api-tutorial/
+
+further instructions on adapt.txt
+
+process: labelimg -> xml -> xml_to_csv.py -> csv -> generate_tfrecord.py -> train/test.record
+model/research/object_detection/data/train.record
+model/research/object_detection/data/test.record
+model/research/object_detection/data/object_detection.pbtxt (label map)
+model/research/object_detection/test_images
+
+---- TRAIN ---- https://pythonprogramming.net/training-custom-objects-tensorflow-object-detection-api-tutorial/
+
+further instructions on adapt.txt
+
+architecture: faster_rcnn_inception_resnet_v2_atrous_coco
+from: https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf1_detection_zoo.md
+goes in: model/research/object_detection/architectures
+
+configuration
+from: faster_rcnn_inception_resnet_v2_atrous_coco_2018_01_28/pipeline.config
+from: https://github.com/tensorflow/models/tree/master/research/object_detection/samples/configs
+data augmentation: https://stackoverflow.com/questions/44906317/what-are-possible-values-for-data-augmentation-options-in-the-tensorflow-object * he tenido que quitar vertical_flip y rotation90
+goes into: model/research/object_detection/training
+
+python3 train.py --logtostderr --train_dir=RUNS/xxx --pipeline_config_path=training/xxx.config
+
+---- INFERENCE ---- https://pythonprogramming.net/testing-custom-object-detector-tensorflow-object-detection-api-tutorial/
+
+further instructions on adapt.txt
+
+take my evaluate.py
+
+frozen graph
+python3 export_inference_graph.py --input_type image_tensor --pipeline_config_path training/xxx.config --trained_checkpoint_prefix RUNS/xxx/model.ckpt-xxx --output_directory RUNS/xxx/frozen
+
+infer
+python3 evaluate.py --inference_graph_dir=RUNS/xxx/frozen/ --print_thr 0.1 --test_dir test_images/ --out_dir results/xxx/ --id ""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
