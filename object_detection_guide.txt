@@ -67,9 +67,9 @@ CUDNN: 6.0 fron CUDA 8 * from https://developer.nvidia.com/rdp/cudnn-archive (mi
 
 Download all 3 .deb files: the runtime library, the developer library, and the code samples library for Ubuntu 16.04
 
-$ sudo dpkg -i libcudnn7_7.0.5.15–1+cuda9.0_amd64.deb (the runtime library)
-$ sudo dpkg -i libcudnn7-dev_7.0.5.15–1+cuda9.0_amd64.deb (the developer library)
-$ sudo dpkg -i libcudnn7-doc_7.0.5.15–1+cuda9.0_amd64.deb (the code samples)
+$ sudo dpkg -i libcudnn7_7.0.5.15–1+cuda9.0_amd64.deb (the runtime library)                        # 6
+$ sudo dpkg -i libcudnn7-dev_7.0.5.15–1+cuda9.0_amd64.deb (the developer library)                  # 6
+$ sudo dpkg -i libcudnn7-doc_7.0.5.15–1+cuda9.0_amd64.deb (the code samples)					   # 6
 
 test CUDNN
 
