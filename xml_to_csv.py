@@ -10,12 +10,13 @@ import glob
 import pandas as pd
 import xml.etree.ElementTree as ET
 import tensorflow as tf
+import argparse
 
-flags = tf.app.flags
-flags.DEFINE_string('folder', '', 'Path to the folder')
-FLAGS = flags.FLAGS
+parser = argparse.ArgumentParser()
+parser.add_argument('--folder', help='Path to the folder')
+parsed_args = parser.parse_args()
+folder = parsed_args.folder
 
-folder = FLAGS.folder
 
 def xml_to_csv(path):
     xml_list = []
