@@ -27,12 +27,8 @@ folder = FLAGS.folder
 
 # TO-DO replace this with label map
 def class_text_to_int(row_label):
-    if row_label == 'noctiluca':
+    if row_label == 'halimeda':
         return 1
-    elif row_label == 'pulmo':
-        return 2
-    elif row_label == 'tuberculata':
-        return 3
     else:
         print("salgo con: " + str(row_label))
 
@@ -88,10 +84,10 @@ def create_tf_example(group, path):
 
 def main(_):
 
-    path_data = os.path.join(folder, 'data')
+    path_data = os.path.join(folder)
     path_csv = path_data + '/test_labels.csv'
 
-    images_path = "images/test"
+    images_path = "test"
     writer = tf.python_io.TFRecordWriter(path_data + '/test.record')
     path = os.path.join(folder, images_path)
     examples = pd.read_csv(path_csv)
@@ -105,7 +101,7 @@ def main(_):
 
     path_csv = path_data + '/train_labels.csv'
 
-    images_path = "images/train"
+    images_path = "train"
     writer = tf.python_io.TFRecordWriter(path_data + '/train.record')
     path = os.path.join(folder, images_path)
     examples = pd.read_csv(path_csv)

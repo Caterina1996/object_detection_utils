@@ -18,9 +18,11 @@ FLAGS = flags.FLAGS
 folder = FLAGS.folder
 
 def xml_to_csv(path):
-
+    print(path)
     xml_list = []
     for xml_path in glob.glob(path + '/*.xml'):
+
+        print(xml_path)
 
         tree = ET.parse(xml_path)
         root = tree.getroot()
@@ -31,19 +33,13 @@ def xml_to_csv(path):
         im_file = xml_name + extension
 
         for member in root.findall('object'):
-            if member[0].text == "P. noctiluca" or member[0].text == "pelagia":
-                c = "noctiluca"
-            elif member[0].text == "R. pulmo":
-                c = "pulmo"
-            elif member[0].text == "C. tuberculata" or member[0].text == "C. tuberculata ":
-                c = "tuberculata"
-            else:
+            if member[0].text != "halimeda":
                 print("salgo con: " + str(member[0].text))
 
             value = (im_file,
                      int(root.find('size')[0].text),
                      int(root.find('size')[1].text),
-                     c,
+                     member[0].text,
                      int(member[4][0].text),
                      int(member[4][1].text),
                      int(member[4][2].text),
@@ -60,7 +56,7 @@ def main():
     for directory in ['train', 'test']:
         image_path = os.path.join(folder, 'images/{}'.format(directory))
         xml_df = xml_to_csv(image_path)
-        xml_df.to_csv(folder + 'data/{}_labels.csv'.format(directory), index=None)
+        xml_df.to_csv(folder + '/images/{}_labels.csv'.format(directory), index=None)
 
         print('Successfully converted xml to csv.')
 

@@ -23,16 +23,10 @@ def xml_to_txt(xml_file):
     root = tree.getroot()
     for instance in root.findall('object'):
 
-        if instance[0].text == "P. noctiluca" or instance[0].text == "pelagia":
-            type = "noctiluca"
-        elif instance[0].text == "R. pulmo":
-            type = "pulmo"
-        elif instance[0].text == "C. tuberculata" or instance[0].text == "C. tuberculata ":
-            type = "tuberculata"
-        else:
+        if instance[0].text != "halimeda":
             print("salgo con: " + str(instance[0].text))
 
-        value = (type,                        # class
+        value = (str(instance[0].text),                        # class
                  str(instance[4][0].text),    # left
                  str(instance[4][1].text),    # top
                  str(instance[4][2].text),    # right
@@ -67,10 +61,10 @@ def main():
             with open(file_out, 'w') as f:
                 for instance in instances:
                     f.write(instance[0] + " " +
-                            instance[1] + " " +
-                            instance[2] + " " +
-                            instance[3] + " " +
-                            instance[4] + "\n")
+                            str(instance[1]) + " " +
+                            str(instance[2]) + " " +
+                            str(instance[3]) + " " +
+                            str(instance[4]) + "\n")
 
     print('Successfully converted xml to txt.')
 
