@@ -18,11 +18,8 @@ FLAGS = flags.FLAGS
 folder = FLAGS.folder
 
 def xml_to_csv(path):
-    print(path)
     xml_list = []
     for xml_path in glob.glob(path + '/*.xml'):
-
-        print(xml_path)
 
         tree = ET.parse(xml_path)
         root = tree.getroot()
