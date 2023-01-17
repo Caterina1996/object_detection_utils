@@ -28,6 +28,23 @@ import pandas as pd
 call:
 python pascalvoc.py -tiou 0.5 -tconf 0.1 -gtformat=xyrb -detformat=xyrb -gt data/medusas/groundtruths/c3/ -det data/medusas/runs/CROSS/c3_2_45_40k/nms324540/ -np -sp results/c3_2_45 -sn results40
 
+python pascalvoc.py -tiou 0.5 -tconf 0.1 -gtformat=xywh -detformat=xywh -gt /mnt/c/Users/haddo/yolov5/datasets/halimeda/labels/test/  \
+                    -det /mnt/c/Users/haddo/yolov5/projects/halimeda/yolo_X6/hyp_high_2_lr2/results_txts/labels/  \
+                    -np -sp /mnt/c/Users/haddo/yolov5/projects/halimeda/yolo_X6/hyp_high_2_lr2/pascalvoc/ -imgsize 1024,1024
+
+python pascalvoc.py -tiou 0.5 -tconf 0.1 -gtformat=xywh -detformat=xywh -gt /mnt/c/Users/haddo/yolov5/datasets/halimeda/labels/test/  \
+                    -det /mnt/c/Users/haddo/yolov5/projects/halimeda/yolo_X6/hyp_high_2_lr2/results_txts/labels_test/  \
+                    -np -sp /mnt/c/Users/haddo/yolov5/projects/halimeda/yolo_X6/hyp_high_2_lr2/pascalvoc/ -imgsize 1024,1024
+
+python pascalvoc.py -tiou 0.5 -tconf 0.1 -gtformat=xywh -detformat=xywh -gt /mnt/c/Users/haddo/yolov5/datasets/halimeda/labels/test/  \
+                    -det /mnt/c/Users/haddo/yolov5/projects/halimeda/yolo_X6/hyp_high_2_lr2/results_txts/labels_test/  \
+                    -np -sp /mnt/c/Users/haddo/yolov5/projects/halimeda/yolo_X6/hyp_high_2_lr2/pascalvoc/ -imgsize 1024,1024
+
+python pascalvoc.py -tiou 0.5 -tconf 0.1 -gtformat=xywh -detformat=xywh -gt /mnt/c/Users/haddo/yolov5/datasets/halimeda/labels/test2/gt/  \
+                    -det /mnt/c/Users/haddo/yolov5/datasets/halimeda/labels/test2/pred/  \
+                    -np -sp /mnt/c/Users/haddo/yolov5/projects/halimeda/yolo_X6/hyp_high_2_lr2/pascalvoc/ -imgsize 1024,1024
+
+
 '''
 
 
@@ -250,6 +267,7 @@ parser.add_argument(
     'absolute values (\'abs\') or relative to its image size (\'rel\')')
 parser.add_argument(
     '-imgsize',
+    # default=1024,
     dest='imgSize',
     metavar='',
     help='image size. Required if -gtcoords or -detcoords are \'rel\'')
@@ -261,6 +279,7 @@ parser.add_argument(
 parser.add_argument(
     '-sn', '--savename',
     dest='saveName',
+    default="results",
     metavar='',
     help='name of the saved txt')
 parser.add_argument(
@@ -296,6 +315,8 @@ if gtCoordType == CoordinatesType.Relative:  # Image size is required
     imgSize = ValidateImageSize(args.imgSize, '-imgsize', '-gtCoordinates', errors)
 if detCoordType == CoordinatesType.Relative:  # Image size is required
     imgSize = ValidateImageSize(args.imgSize, '-imgsize', '-detCoordinates', errors)
+
+#imgSize = (1024, 1024)
 # Detection folder
 if ValidateMandatoryArgs(args.detFolder, '-det/--detfolder', errors):
     detFolder = ValidatePaths(args.detFolder, '-det/--detfolder', errors)
@@ -312,7 +333,7 @@ else:
 
 print(savePath)
 # If error, show error messages
-if len(errors) is not 0:
+if len(errors) != 0:
     print("""usage: Object Detection Metrics [-h] [-v] [-gt] [-det] [-t] [-gtformat]
                                 [-detformat] [-save]""")
     print('Object Detection Metrics: error(s): ')
@@ -326,15 +347,15 @@ if not os.path.exists(savePath):
 # Show plot during execution
 showPlot = args.showPlot
 
-# print('iouThreshold= %f' % iouThreshold)
-# print('savePath = %s' % savePath)
-# print('gtFormat = %s' % gtFormat)
-# print('detFormat = %s' % detFormat)
-# print('gtFolder = %s' % gtFolder)
-# print('detFolder = %s' % detFolder)
-# print('gtCoordType = %s' % gtCoordType)
-# print('detCoordType = %s' % detCoordType)
-# print('showPlot %s' % showPlot)
+print('iouThreshold= %f' % iouThreshold)
+print('savePath = %s' % savePath)
+print('gtFormat = %s' % gtFormat)
+print('detFormat = %s' % detFormat)
+print('gtFolder = %s' % gtFolder)
+print('detFolder = %s' % detFolder)
+print('gtCoordType = %s' % gtCoordType)
+print('detCoordType = %s' % detCoordType)
+print('showPlot %s' % showPlot)
 
 # Get groundtruth boxes
 allBoundingBoxes, allClasses = getBoundingBoxes(
@@ -354,7 +375,7 @@ validClasses = 0
 acc_AP = 0
 
 name = args.saveName
-
+print("name is ",name)
 map = results_g['map']
 best_thr = results_g['conf_thr']
 best_rec = results_g['recall']
@@ -415,6 +436,7 @@ df[header].to_csv(os.path.join(savePath, name + '.csv'))
 
 
 '''
+
 # for each class
 for c in allClasses:
     # Plot Precision x Recall curve
