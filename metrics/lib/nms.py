@@ -71,6 +71,17 @@ def getBoxFromPred(pred):
     box = (pred[2], pred[3], pred[4], pred[5])
     return box
 
+def yolo_to_xml_bbox(bbox, w, h):
+    # x_center, y_center width heigth
+    w_half_len = (bbox[2] * w) / 2
+    h_half_len = (bbox[3] * h) / 2
+    xmin = int((bbox[0] * w) - w_half_len)
+    ymin = int((bbox[1] * h) - h_half_len)
+    xmax = int((bbox[0] * w) + w_half_len)
+    ymax = int((bbox[1] * h) + h_half_len)
+    return [xmin, ymin, xmax, ymax]
+
+
 
 def main():
 
@@ -78,11 +89,17 @@ def main():
     parser.add_argument('--path_in', help='txt input directory.')
     parser.add_argument('--path_out', help='txt output directory.')
     parser.add_argument('--thr', help='min iou threshold to delete prediction.')
+    parser.add_argument('--w', help='image_width',default=1024)
+    parser.add_argument('--h', help='image_height',default=1024)
+    parser.add_argument('--yolo_format', help='labels format',default=True)
     parsed_args = parser.parse_args(sys.argv[1:])
 
     dir_in = parsed_args.path_in
     dir_out = parsed_args.path_out
     thr = float(parsed_args.thr)
+    w = int(parsed_args.w)
+    h = int(parsed_args.h)
+    yolo_format = parsed_args.yolo_format
 
     if not os.path.exists(dir_out):
         os.makedirs(dir_out)
@@ -96,7 +113,7 @@ def main():
             predictions = getPredictions(file_path)
             predictions = sorted(predictions, key=lambda conf: conf[1], reverse=True)
 
-            #print('predictions length: ' + str(len(predictions)))
+            print('predictions length: ' + str(len(predictions)))
 
             for i1, pred1 in enumerate(predictions):
 
@@ -107,11 +124,19 @@ def main():
                 intersectionArea2 = list()
                 delete = list()
                 box1 = getBoxFromPred(pred1)
+
+                if yolo_format:
+                    box1=yolo_to_xml_bbox(box1, w, h)
+
                 area1 = getBoxArea(box1)
 
                 for i2, pred2 in enumerate(predictions):
 
                     box2 = getBoxFromPred(pred2)
+
+                    if yolo_format:
+                        box2=yolo_to_xml_bbox(box2, w, h)
+
                     area2 = getBoxArea(box2)
 
                     inter = getIntersectionArea(box1, box2)
@@ -132,14 +157,23 @@ def main():
 
             file_out = os.path.join(dir_out, file)
 
+            print("len Predictions after nms: ",len(predictions))
             with open(file_out, 'w') as f:
                 for prediction in predictions:
                     f.write(prediction[0] + " " +
                             str(prediction[1]) + " " +
-                            str(int(prediction[2])) + " " +
-                            str(int(prediction[3])) + " " +
-                            str(int(prediction[4])) + " " +
-                            str(int(prediction[5])) + "\n")
+                            str(prediction[2]) + " " +
+                            str(prediction[3]) + " " +
+                            str(prediction[4]) + " " +
+                            str(prediction[5]) + "\n")
+
+                    # for abs coordinates use this 
+                    # f.write(prediction[0] + " " +
+                    #         str(prediction[1]) + " " +
+                    #         str(int(prediction[2])) + " " +
+                    #         str(int(prediction[3])) + " " +
+                    #         str(int(prediction[4])) + " " +
+                    #         str(int(prediction[5])) + "\n")
 
 print('Successfully nms applied.')
 
