@@ -1,27 +1,14 @@
 import os
 import re
-import glob
 import sys
 import argparse
 import numpy as np
-from scipy import ndimage
-import scipy.misc
 import pandas as pd
-
 import imageio.v2 as imageio
-
+import matplotlib.pyplot as plt
 '''
 call:
-python coverage.py --path_im ../halimeda/im/ --path_txt ../halimeda/cthr/ --path_out ../halimeda/coverage --grid 500
-
-python coverage.py --path_im /mnt/c/Users/haddo/yolov5/datasets/halimeda/images/test \
-     --path_txt /mnt/c/Users/haddo/yolov5/projects/halimeda/final_trainings/yolo_XL/hyp_high_lr2_a/inference_test/labels \
-         --path_out /mnt/c/Users/haddo/yolov5/projects/halimeda/final_trainings/yolo_XL/hyp_high_lr2_a/inference_test/coverage --grid 500
-
-python coverage.py --path_im /mnt/c/Users/haddo/yolov5/datasets/halimeda/images/test \
-     --path_txt /mnt/c/Users/haddo/yolov5/datasets/halimeda/labels/test \
-         --path_out /mnt/c/Users/haddo/yolov5/projects/halimeda/final_trainings/yolo_XL/hyp_high_lr2_a/inference_test/coverage_gt --grid 500
-
+python weight_map.py --dir_im /images/test --path_txt /labels/test --path_out /final_trainings/yolo_XL/hyp_high_lr2_a/inference_test/weight_maps
 
 '''
 
@@ -84,22 +71,28 @@ def getBoxFromInst(inst):
 
 def main():
 
-
     parser = argparse.ArgumentParser()
     parser.add_argument('--dir_im', help='im input directory.')
     parser.add_argument('--path_txt', help='txt input directory.')
     parser.add_argument('--path_out', help='im output directory.')
-    parser.add_argument('--grid', default=0, help='grid AxA.')
     parsed_args = parser.parse_args(sys.argv[1:])
 
     dir_im = parsed_args.dir_im
     path_txt = parsed_args.path_txt
     path_out = parsed_args.path_out
-    grid = int(parsed_args.grid)
 
-    test_cases = list()
-    cov_pix_list = list()
-    cov_grid_list = list()
+    max_bbox_size = 0
+
+    for file in sorted(os.listdir(path_txt)):
+        if re.search("\.(txt)$", file):  # if the file is a txt
+            file_path = os.path.join(path_txt, file)
+            instances = getInstances(file_path)
+            for i, instance in enumerate(instances):
+                box = getBoxFromInst(instance)
+                (left, top, right, bottom) = (int(box[0]), int(box[1]), int(box[2]), int(box[3]))
+                bbox_size = (right-left)*(bottom-top)
+                if bbox_size > max_bbox_size:
+                    max_bbox_size = bbox_size
 
     for file in sorted(os.listdir(path_txt)):
 
@@ -108,65 +101,25 @@ def main():
             name, ext = os.path.splitext(file)
             path_im = os.path.join(dir_im, name + ".jpg")
 
-            test_cases.append(name)
-
             image = imageio.imread(path_im)  # read image
-            aux_im = np.zeros([image.shape[0], image.shape[1]], dtype=np.uint8)  # auxiliary black image
+            weight_im = np.ones([image.shape[0], image.shape[1]], dtype=np.uint16)  # auxiliary black image
 
             file_path = os.path.join(path_txt, file)
             instances = getInstances(file_path)
-
 
             for i, instance in enumerate(instances):
                 box = getBoxFromInst(instance)
                 (left, top, right, bottom) = (int(box[0]), int(box[1]), int(box[2]), int(box[3]))
 
+                bbox_size = (right-left)*(bottom-top)
+                weight = int(max_bbox_size/bbox_size)
+
                 for j in range(top, bottom):
                     for k in range(left, right):
-                        aux_im[j, k] = 255
+                        weight_im[j, k] = weight
 
-            cov_pix = (np.sum(aux_im == 255)/np.size(aux_im))*100
-            cov_pix_list.append(cov_pix)
-
-
-            if grid > 0:
-
-                count = 0
-                total = grid*grid
-
-                step_h = image.shape[0]/grid
-                step_w = image.shape[1]/grid
-
-                index_h = list()
-                index_w = list()
-
-                for i in range(1, grid):
-                    index_h.append(int(step_h*i))
-                    index_w.append(int(step_w*i))
-
-                split1 = np.array_split(aux_im, index_h)
-
-                for sp1 in enumerate(split1):
-
-                    split2 = np.array_split(sp1[1], index_w, axis=1)
-
-                    for sp2 in enumerate(split2):
-                        if np.sum(sp2[1] == 255) > 0:
-                            count = count+1
-
-                cov_grid = (count/total)*100
-                cov_grid_list.append(cov_grid)
-
-
-            save_path = os.path.join(path_out, name + "_cov" + ".jpg")
-            imageio.imsave(save_path, aux_im)  # generate image file
-
-            # save spine results on csv
-            header = ['cov_pix', 'cov_grid']
-            cov_csv = ({header[0]: cov_pix_list, header[1]: cov_grid_list})
-            df = pd.DataFrame.from_records(cov_csv, index=test_cases)
-            df.to_csv(path_out + "/coverage_"+str(grid)+".csv")
-
-
+            # save_path = os.path.join(path_out, name + "_weight" + ".xlsx")
+            # df = pd.DataFrame(weight_im)
+            # df.to_excel(save_path, index=False)
 
 main()

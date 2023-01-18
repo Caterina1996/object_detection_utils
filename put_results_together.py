@@ -1,8 +1,8 @@
 import glob
 import pandas as pd
 
-#results_csvs=glob.glob("/mnt/c/Users/haddo/yolov5/projects/halimeda/final_trainings/**/**/results/**results.csv")
-results_csvs=glob.glob("/mnt/c/Users/haddo/yolov5/projects/halimeda/final_trainings/**/**/results/**/**results.csv")
+results_csvs=glob.glob("/mnt/c/Users/haddo/yolov5/projects/halimeda/final_trainings/**/**/results/**results.csv")
+# results_csvs=glob.glob("/mnt/c/Users/haddo/yolov5/projects/halimeda/final_trainings/**/**/results/**/**results.csv")
 max=0
 for i,csv in enumerate(results_csvs):
     file_id=csv.split("/") [-4]+"_"+csv.split("/") [-3]
