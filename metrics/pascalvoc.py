@@ -267,7 +267,6 @@ parser.add_argument(
     'absolute values (\'abs\') or relative to its image size (\'rel\')')
 parser.add_argument(
     '-imgsize',
-    # default=1024,
     dest='imgSize',
     metavar='',
     help='image size. Required if -gtcoords or -detcoords are \'rel\'')
@@ -279,7 +278,7 @@ parser.add_argument(
 parser.add_argument(
     '-sn', '--savename',
     dest='saveName',
-    default="results",
+    default="results_pascalvoc",
     metavar='',
     help='name of the saved txt')
 parser.add_argument(

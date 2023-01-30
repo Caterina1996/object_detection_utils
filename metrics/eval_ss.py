@@ -9,7 +9,7 @@ from sklearn import metrics
 import matplotlib.pyplot as plt
 from skimage.transform import resize
 from skimage.io import imread, imshow, imsave
-import fnmatch
+import glob
 
 """
 call:
@@ -72,6 +72,18 @@ def getBoxFromInst(inst):
         box = (inst[2], inst[3], inst[4], inst[5])
     return box
 
+def list_only_images(dir,extensions):
+    images_list=[]
+    for extension in extensions:
+        images_list.extend(glob.glob(dir+extension))
+
+    images_ids=[x.split("/")[-1] for x in images_list]
+
+    print(images_ids,"\n")
+    return images_ids
+
+
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--pred_path', help='Path to the run folder', type=str)
@@ -93,8 +105,19 @@ shape = parsed_args.shape
 IMG_WIDTH = shape
 IMG_HEIGHT = shape
 
-pred_list = sorted(os.listdir(pred_path))
-preds = np.zeros((len(pred_list), IMG_HEIGHT, IMG_WIDTH), dtype=np.uint8)
+extensions=["*.jpg","*.JPG","*.png","*.PNG"]
+
+#gt_list = sorted(os.listdir(gt_im_path))
+gt_list=sorted(list_only_images(gt_im_path,extensions))
+
+gts = np.zeros((len(gt_list), IMG_HEIGHT, IMG_WIDTH), dtype=np.uint8)
+
+#pred_list = sorted(os.listdir(pred_path))
+pred_list=sorted(list_only_images(pred_path,extensions))
+preds = np.zeros((len(pred_list), IMG_HEIGHT, IMG_WIDTH), dtype=np.uint8) # use gt_list len to avoid problems caused by csvs in preds
+
+print("PRED: ",pred_list,"\n")
+
 for n, name in enumerate(pred_list):
     if ".csv" not in name:
         path = os.path.join(pred_path, name)
@@ -104,8 +127,7 @@ for n, name in enumerate(pred_list):
     else:
         print("ALTO ! UN CSV!!")
 
-gt_list = sorted(os.listdir(gt_im_path))
-gts = np.zeros((len(gt_list), IMG_HEIGHT, IMG_WIDTH), dtype=np.uint8)
+
 for n, name in enumerate(gt_list):
     if ".csv" not in name:
         path = os.path.join(gt_im_path, name)
@@ -114,8 +136,6 @@ for n, name in enumerate(gt_list):
         gts[n] = img
     else:
         print("ALTO ! UN CSV!!")
-
-
 
 print("PRED LIST: ",pred_list,"\n")
 print("GT LIST: ",gt_list,"\n")
@@ -198,7 +218,7 @@ data = {'Run': [run_name],'tp': [tp],'tn': [tn],'fp': [fp],'fn': [fn], 'acc': [a
 df = pd.DataFrame(data)
 print(df)
 
-df.to_excel(os.path.join(save_path,'metrics_ss_test_hp.xlsx'))
+df.to_excel(os.path.join(save_path,'metrics_ss.xlsx'))
 
 
 

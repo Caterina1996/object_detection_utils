@@ -1,7 +1,7 @@
 import glob
 import pandas as pd
 
-results_csvs=glob.glob("/mnt/c/Users/haddo/yolov5/projects/halimeda/final_trainings/**/**/results/**results.csv")
+results_csvs=glob.glob("/mnt/c/Users/haddo/yolov5/projects/halimeda/k-fold_trainings/**/**/**results_pascalvoc.csv")
 # results_csvs=glob.glob("/mnt/c/Users/haddo/yolov5/projects/halimeda/final_trainings/**/**/results/**/**results.csv")
 max=0
 for i,csv in enumerate(results_csvs):
