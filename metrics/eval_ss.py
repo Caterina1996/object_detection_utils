@@ -15,7 +15,7 @@ import glob
 call:
 
 python eval_weights.py  --pred_path /mnt/c/Users/haddo/yolov5/projects/halimeda/final_trainings/yolo_XL/hyp_high_lr2_a/inference_test/coverage_pred \
-                        --gt_im_path /mnt/c/Users/haddo/yolov5/projects/halimeda/final_trainings/yolo_XL/hyp_high_lr2_a/inference_test/coverage_gt \
+                        --gt_path /mnt/c/Users/haddo/yolov5/projects/halimeda/final_trainings/yolo_XL/hyp_high_lr2_a/inference_test/coverage_gt \
                         --gt_label_path /mnt/c/Users/haddo/yolov5/datasets/halimeda/labels/test \
                         --run_name yolo_XL_hyp_high_lr2_a \
                         --save_path /mnt/c/Users/haddo/yolov5/projects/halimeda/final_trainings/yolo_XL/hyp_high_lr2_a/inference_test \
@@ -87,8 +87,7 @@ def list_only_images(dir,extensions):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--pred_path', help='Path to the run folder', type=str)
-parser.add_argument('--gt_im_path', help='Path to the gt folder', type=str)
-parser.add_argument('--gt_label_path', help='txt input directory.')
+parser.add_argument('--gt_path', help='Path to the gt folder', type=str)
 parser.add_argument('--run_name', help='Path to the gt folder', type=str)
 parser.add_argument('--save_path', help='Path to the gt folder', type=str)
 parser.add_argument('--shape', help='img_shape', type=int)
@@ -96,8 +95,7 @@ parser.add_argument('--shape', help='img_shape', type=int)
 parsed_args = parser.parse_args()
 
 pred_path = parsed_args.pred_path
-gt_im_path = parsed_args.gt_im_path
-gt_label_path = parsed_args.gt_label_path
+gt_path = parsed_args.gt_path
 run_name = parsed_args.run_name
 save_path = parsed_args.save_path
 shape = parsed_args.shape
@@ -107,8 +105,8 @@ IMG_HEIGHT = shape
 
 extensions=["*.jpg","*.JPG","*.png","*.PNG"]
 
-#gt_list = sorted(os.listdir(gt_im_path))
-gt_list=sorted(list_only_images(gt_im_path,extensions))
+#gt_list = sorted(os.listdir(gt_path))
+gt_list=sorted(list_only_images(gt_path,extensions))
 
 gts = np.zeros((len(gt_list), IMG_HEIGHT, IMG_WIDTH), dtype=np.uint8)
 
@@ -130,7 +128,7 @@ for n, name in enumerate(pred_list):
 
 for n, name in enumerate(gt_list):
     if ".csv" not in name:
-        path = os.path.join(gt_im_path, name)
+        path = os.path.join(gt_path, name)
         img = imread(path,as_gray = True)
         img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
         gts[n] = img
@@ -141,9 +139,6 @@ print("PRED LIST: ",pred_list,"\n")
 print("GT LIST: ",gt_list,"\n")
 print("LEN PREDS: ",len(preds),"\n")
 print("LEN GTS: ",len(gts),"\n")
-
-if len(gts)!=len(preds):
-    print("WEEEEEEEEEEEEEEEWOOOOOOOOOOOO you've got a problem my friend!")
 
 weights = np.ones((len(gt_list), IMG_HEIGHT, IMG_WIDTH), dtype=np.uint16)
 
@@ -175,45 +170,70 @@ for idx, file in enumerate(sorted(os.listdir(gt_label_path))):
 
 pred_flat = preds.flatten()
 gt_flat = gts.flatten()
-weight_flat = weights.flatten()
-
-pred_flat = np.where(pred_flat>100, 1, 0)
 gt_flat = np.where(gt_flat>100, 1, 0)
 
-tp = 0
-tn = 0
-fp = 0
-fn = 0
 
-for i in tqdm(range(np.shape(gt_flat)[0])):
+recall_list = list()
+precision_list = list()
+fallout_list = list()
+accuracy_list =  list()
+f1_list = list()
 
-    gt = gt_flat[i]
-    pred = pred_flat[i]
-    weight = weight_flat[i]
+#thr_list = [100,150]
+max_grey = np.max(grey_flat)
 
-    if gt == pred:
-        if gt == 0:
-            tn = tn + 1
+for thr in tqdm(range(1, max_grey)):  # range(1, max_grey)
+
+    pred_flat = np.where(pred_flat>thr, 1, 0)
+
+    tp = 0
+    tn = 0
+    fp = 0
+    fn = 0
+
+    for i in tqdm(range(np.shape(gt_flat)[0])):
+
+        gt = gt_flat[i]
+        pred = pred_flat[i]
+
+        if gt == pred:
+            if gt == 0:
+                tn = tn + 1
+            else:
+                tp = tp + 1
         else:
-            tp = tp + 1
-    else:
-        if gt == 0:
-            fp = fp + 1
-        else:
-            fn = fn + 1
+            if gt == 0:
+                fp = fp + 1
+            else:
+                fn = fn + 1
 
-acc = (tp+tn)/(tp+tn+fp+fn)
-prec = tp/(tp+fp)
-rec = tp/(tp+fn)
-fall = fp/(fp+tn)
-f1 = 2*((prec*rec)/(prec+rec))
+    acc = (tp+tn)/(tp+tn+fp+fn)
+    prec = tp/(tp+fp)
+    rec = tp/(tp+fn)
+    fall = fp/(fp+tn)
+    f1 = 2*((prec*rec)/(prec+rec))
+
+
+    recall_list.append(recall)
+    precision_list.append(precision)
+    fallout_list.append(fallout)
+    accuracy_list.append(accuracy)
+    f1_list.append(f1)
+
+thr_best = np.argmax(f1_list)
+
+acc_best = accuracy_list[thr_best]
+prec_best = precision_list[thr_best]
+rec_best = recall_list[thr_best]
+fallout_best = fallout_list[thr_best]
+f1_best = f1_list[thr_best]
 
 try:
     os.mkdir(save_path)
 except:
     print("")
 
-data = {'Run': [run_name],'tp': [tp],'tn': [tn],'fp': [fp],'fn': [fn], 'acc': [acc], 'prec': [prec], 'rec': [rec], 'fall': [fall], 'f1': [f1]}
+data = {'Run': [run_name],'thr': [thr_best],'acc': [acc_best], 'prec': [prec_best], 'rec': [rec_best], 'fall': [fallout_best], 'f1': [f1_best]}
 
 df = pd.DataFrame(data)
 print(df)
