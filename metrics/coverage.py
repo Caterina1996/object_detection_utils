@@ -13,6 +13,9 @@ import imageio.v2 as imageio
 '''
 call:
 python coverage.py --shape 1024 --path_txt ../halimeda/cthr/ --path_out ../halimeda/coverage --grid 500
+
+
+python coverage.py --shape 1024 --path_txt  --path_out ../halimeda/coverage --grid 500
 '''
 
 
@@ -37,6 +40,7 @@ def getInstances(file):
         splitLine = line.split(" ")
         idClass = (splitLine[0])  # class
         if len(splitLine) == 5:
+            print("this is gt!!!")
             x = float(splitLine[1])
             y = float(splitLine[2])
             w = float(splitLine[3])
@@ -103,7 +107,11 @@ def main():
 
                 for j in range(top, bottom):
                     for k in range(left, right):
-                        aux_im[j, k] = int(255*instance[1])
+                        #Check this!!
+                        if len(instance)==6:
+                            aux_im[j, k] = int(255*instance[1])
+                        elif len(instance)==5:
+                            aux_im[j, k] = int(255)
 
             cov_pix = (np.sum(aux_im != 0)/np.size(aux_im))*100
             cov_pix_list.append(cov_pix)
