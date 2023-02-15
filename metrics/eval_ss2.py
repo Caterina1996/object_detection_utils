@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from skimage.transform import resize
 from skimage.io import imread, imshow, imsave
 import glob
+
 def list_only_images(dir,extensions):
     images_list=[]
     for extension in extensions:
@@ -31,7 +32,7 @@ parser.add_argument('--save_path', help='Path to the gt folder', type=str)
 parser.add_argument('--gt_label_path', help='txt input directory.')
 
 parsed_args = parser.parse_args()
-
+run_name=parsed_args.run_name
 run_path = parsed_args.pred_path
 mask_path = parsed_args.gt_im_path
 shape = parsed_args.shape
@@ -68,6 +69,7 @@ for n, id_ in enumerate(mask_list):
 grey_flat = grey.flatten()
 
 mask_flat = mask.flatten()
+max_grey = np.max(grey_flat)
 
 mask_flat=np.where(mask_flat>100,1,0)
 grey_flat=grey_flat/255
@@ -76,17 +78,17 @@ zeros = np.count_nonzero(mask_flat == 0)
 ones = np.count_nonzero(mask_flat == 1)
 
 
-print("MASK TYPE ",mask_flat)
-print("GREY TYPE ",grey_flat)
+print("zeros: ",zeros)
+print("ones ",ones)
 
-
-
-for elem in mask_flat:
-    if elem!=0 and elem!=1:
-        print(elem)
+print("check!: ",ones+zeros==len(mask_flat) )
 
 fp, tp, thr = metrics.roc_curve(mask_flat,grey_flat)
 roc_auc = metrics.roc_auc_score(mask_flat, grey_flat) #  shape (n_samples,)
+
+# print("TP: ",tp)
+# print("FP: ",fp)
+
 
 #plt.plot(fp,tp)
 #plt.ylabel('True Positive Rate')
@@ -100,12 +102,14 @@ accuracy_list =  list()
 f1_list = list()
 
 #thr_list = [100,150]
-max_grey = np.max(grey_flat)
 
-for thr in tqdm(range(0, 255)):  # range(1, max_grey)
+for thr in tqdm(range(0, max_grey)):  # range(1, max_grey)
+    
     thr=thr/255
 
     bw_flat = np.where(grey_flat>thr, 1, 0)
+
+    # print("bw_flat ",bw_flat,"\n")
 
     TN, FP, FN, TP = metrics.confusion_matrix(mask_flat,bw_flat).ravel()
 
@@ -115,6 +119,14 @@ for thr in tqdm(range(0, 255)):  # range(1, max_grey)
     accuracy = (TP+TN)/(TP+FP+FN+TN)
     f1 = 2*((precision*recall)/(precision+recall))
 
+    print("TP is: ",TP,"FP is ",FP,"FN is ",FN,"TN is ",TN)
+
+    print("recall ",recall,"\n")
+    print("precision ",precision,"\n")
+    print("fallout ",fallout,"\n")
+    print("accuracy ",accuracy,"\n")
+    print("f1 ",f1,"\n")
+
     recall_list.append(recall)
     precision_list.append(precision)
     fallout_list.append(fallout)
@@ -122,13 +134,24 @@ for thr in tqdm(range(0, 255)):  # range(1, max_grey)
     f1_list.append(f1)
 
 
-thr_best = np.argmax(f1_list)
+
+
+# thr_best = np.argmax(f1_list)
+
+
+thr_best = np.nanargmax(f1_list)
 
 acc_best = accuracy_list[thr_best]
 prec_best = precision_list[thr_best]
 rec_best = recall_list[thr_best]
 fallout_best = fallout_list[thr_best]
 f1_best = f1_list[thr_best]
+
+print("acc_best",acc_best,"\n")
+print("prec_best",prec_best,"\n")
+print("rec_best",rec_best,"\n")
+print("fallout_best",fallout_best,"\n")
+print("f1_best",f1_best,"\n")
 
 save_path = os.path.join(run_path, "metrics")
 
@@ -137,10 +160,10 @@ try:
 except:
     print("")
 
-run_name = os.path.basename(os.path.normpath(run_path))
+# run_name = os.path.basename(os.path.normpath(run_path))
 
 
-data = {'Run': [run_name], 'thr': [thr_best], 'acc': [acc_best], 'prec': [prec_best], 'rec': [rec_best], 'fall': [fallout_best], 'f1': [f1_best], 'auc': [roc_auc]}
+data = {'Run': [run_name],'TP': [TP],'FP': [FP],'TN': [TN],'FN': [FN], 'thr': [thr_best], 'acc': [acc_best], 'prec': [prec_best], 'rec': [rec_best], 'fall': [fallout_best], 'f1': [f1_best], 'auc': [roc_auc]}
 
 df = pd.DataFrame(data)
 print(df)
