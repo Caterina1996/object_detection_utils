@@ -40,9 +40,9 @@ python pascalvoc.py -tiou 0.5 -tconf 0.1 -gtformat=xywh -detformat=xywh -gt /mnt
                     -det /mnt/c/Users/haddo/yolov5/projects/halimeda/yolo_X6/hyp_high_2_lr2/results_txts/labels_test/  \
                     -np -sp /mnt/c/Users/haddo/yolov5/projects/halimeda/yolo_X6/hyp_high_2_lr2/pascalvoc/ -imgsize 1024,1024
 
-python pascalvoc.py -tiou 0.5 -tconf 0.1 -gtformat=xywh -detformat=xywh -gt /mnt/c/Users/haddo/yolov5/datasets/halimeda/labels/test2/gt/  \
-                    -det /mnt/c/Users/haddo/yolov5/datasets/halimeda/labels/test2/pred/  \
-                    -np -sp /mnt/c/Users/haddo/yolov5/projects/halimeda/yolo_X6/hyp_high_2_lr2/pascalvoc/ -imgsize 1024,1024
+python pascalvoc.py -tiou 0.5 -tconf 0.1 -gtformat=xywh -detformat=xywh -gt /mnt/c/Users/haddo/Desktop/test/gt/  \
+                    -det /mnt/c/Users/haddo/Desktop/test/pred/  \
+                    -np -sp /mnt/c/Users/haddo/Desktop/test/ -imgsize 1024,1024
 
 
 '''
