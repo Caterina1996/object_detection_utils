@@ -16,6 +16,11 @@ python coverage.py --shape 1024 --path_txt ../halimeda/cthr/ --path_out ../halim
 
 
 python coverage.py --shape 1024 --path_txt  --path_out ../halimeda/coverage --grid 500
+
+python /mnt/c/Users/haddo/DL_stack/object_detection_utils/metrics/coverage.py --shape 1024 \
+            --path_txt /mnt/c/Users/haddo/yolov5/projects/halimeda/NEW_DATASET/{}/inference_val/labels/ \
+                    --path_out /mnt/c/Users/haddo/yolov5/projects/halimeda/NEW_DATASET/{}/inference_val/coverage/ --grid 500
+
 '''
 
 

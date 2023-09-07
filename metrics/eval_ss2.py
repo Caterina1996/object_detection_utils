@@ -29,13 +29,14 @@ parser.add_argument('--shape', help='img_shape', type=int)
 #extra?
 parser.add_argument('--run_name', help='Path to the gt folder', type=str)
 parser.add_argument('--save_path', help='Path to the gt folder', type=str)
-parser.add_argument('--gt_label_path', help='txt input directory.')
+# parser.add_argument('--gt_label_path', help='txt input directory.',default=None)
 
 parsed_args = parser.parse_args()
 run_name=parsed_args.run_name
 run_path = parsed_args.pred_path
 mask_path = parsed_args.gt_im_path
 shape = parsed_args.shape
+save_path = parsed_args.save_path
 
 IMG_WIDTH = shape
 IMG_HEIGHT = shape
@@ -48,21 +49,27 @@ path_grey = run_path
 print("RUN PATH: ",path_grey)
 
 grey_list = sorted(list_only_images(path_grey,extensions))
-img = imread(os.path.join(path_grey, grey_list[0]))
+# img = imread(os.path.join(path_grey, grey_list[0]))
+img=cv2.imread(os.path.join(path_grey, grey_list[0]),2)
 
+print("Len grey list is: ",len(grey_list))
 
 grey = np.zeros((len(grey_list), IMG_HEIGHT, IMG_WIDTH), dtype=np.uint8)
 for n, id_ in enumerate(grey_list):
     path = os.path.join(path_grey, id_)
-    img = imread(path, as_gray = True)
+    # img = imread(path, as_gray = True)
+    img = cv2.imread(path, 2)
     img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
     grey[n] = img
 
 mask_list = sorted(list_only_images(mask_path,extensions))
+
+print("Len mask list is: ",len(mask_list))
 mask = np.zeros((len(mask_list), IMG_HEIGHT, IMG_WIDTH), dtype=np.uint8)
 for n, id_ in enumerate(mask_list):
     path = os.path.join(mask_path, id_)
-    img = imread(path,as_gray = True)
+    img = cv2.imread(path,2)
+    # img = imread(path,as_gray = True)
     img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
     mask[n] = img
 
@@ -71,7 +78,7 @@ grey_flat = grey.flatten()
 mask_flat = mask.flatten()
 max_grey = np.max(grey_flat)
 
-mask_flat=np.where(mask_flat>100,1,0)
+mask_flat=np.where(mask_flat>128,1,0)
 grey_flat=grey_flat/255
 
 zeros = np.count_nonzero(mask_flat == 0)
@@ -82,6 +89,9 @@ print("zeros: ",zeros)
 print("ones ",ones)
 
 print("check!: ",ones+zeros==len(mask_flat) )
+print("check 2!: ",len(grey_flat)==len(mask_flat) )
+print("len grey: ",len(grey_flat) )
+print("len mask: ",len(mask_flat) )
 
 fp, tp, thr = metrics.roc_curve(mask_flat,grey_flat)
 roc_auc = metrics.roc_auc_score(mask_flat, grey_flat) #  shape (n_samples,)
@@ -153,7 +163,7 @@ print("rec_best",rec_best,"\n")
 print("fallout_best",fallout_best,"\n")
 print("f1_best",f1_best,"\n")
 
-save_path = os.path.join(run_path, "metrics")
+save_path = os.path.join(save_path, "metrics")
 
 try:
     os.mkdir(save_path)
